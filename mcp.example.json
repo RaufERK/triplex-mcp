@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "triplex-docs": {
+      "command": "node",
+      "args": ["/absolute/path/to/triplex-mcp/dist/server.js"],
+      "env": {
+        "DOCS_PATH": "/absolute/path/to/triplex-mcp/docs"
+      }
+    }
+  }
+}
