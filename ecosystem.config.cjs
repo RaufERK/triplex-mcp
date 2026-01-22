@@ -38,8 +38,8 @@ module.exports = {
       'post-deploy': [
         'export NODE_ENV=production',
         'source ~/.nvm/nvm.sh && nvm use 24',
-        'ln -sfn /home/appuser/apps/triplex-mcp/shared/.env ./.env',
-        'npm ci',
+        `ln -sfn ${DEPLOY_PATH}/shared/.env ./.env`,
+        'npm ci --include=dev',
         'npm run build',
         'npm prune --production',
         'pm2 startOrReload ecosystem.config.cjs --env production',
