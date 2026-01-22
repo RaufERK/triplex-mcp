@@ -2,6 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'triplex-mcp',
+      cwd: '/home/appuser/apps/triplex-mcp/source',
       script: 'dist/server.js',
       instances: 1,
       exec_mode: 'fork',
@@ -15,6 +16,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3041,
+        DOCS_PATH: '/home/appuser/apps/triplex-mcp/source/docs',
       },
     },
   ],
