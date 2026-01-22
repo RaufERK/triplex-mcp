@@ -1,8 +1,14 @@
+require('dotenv').config({ path: '.env.deploy' });
+
+const DEPLOY_HOST = process.env.DEPLOY_HOST || 'your.server.ip';
+const DEPLOY_USER = process.env.DEPLOY_USER || 'appuser';
+const DEPLOY_PATH = process.env.DEPLOY_PATH || '/home/appuser/apps/triplex-mcp';
+
 module.exports = {
   apps: [
     {
       name: 'triplex-mcp',
-      cwd: '/home/appuser/apps/triplex-mcp/source',
+      cwd: `${DEPLOY_PATH}/source`,
       script: 'dist/server.js',
       instances: 1,
       exec_mode: 'fork',
@@ -10,24 +16,24 @@ module.exports = {
       max_memory_restart: '256M',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
-      log_file: '/home/appuser/logs/triplex-mcp-combined.log',
-      out_file: '/home/appuser/logs/triplex-mcp-out.log',
-      error_file: '/home/appuser/logs/triplex-mcp-error.log',
+      log_file: `/home/${DEPLOY_USER}/logs/triplex-mcp-combined.log`,
+      out_file: `/home/${DEPLOY_USER}/logs/triplex-mcp-out.log`,
+      error_file: `/home/${DEPLOY_USER}/logs/triplex-mcp-error.log`,
       env: {
         NODE_ENV: 'production',
         PORT: 3041,
-        DOCS_PATH: '/home/appuser/apps/triplex-mcp/source/docs',
+        DOCS_PATH: `${DEPLOY_PATH}/source/docs`,
       },
     },
   ],
 
   deploy: {
     production: {
-      user: 'appuser',
-      host: '185.200.178.73',
+      user: DEPLOY_USER,
+      host: DEPLOY_HOST,
       ref: 'origin/main',
       repo: 'https://github.com/RaufERK/triplex-mcp.git',
-      path: '/home/appuser/apps/triplex-mcp',
+      path: DEPLOY_PATH,
       'pre-deploy-local': '',
       'post-deploy': [
         'export NODE_ENV=production',
