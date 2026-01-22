@@ -1,4 +1,9 @@
-require('dotenv').config({ path: '.env.deploy' });
+// Load .env.deploy only for local deployment (not on server)
+try {
+  require('dotenv').config({ path: '.env.deploy' });
+} catch (e) {
+  // dotenv not available (on server after npm prune)
+}
 
 const DEPLOY_HOST = process.env.DEPLOY_HOST || 'your.server.ip';
 const DEPLOY_USER = process.env.DEPLOY_USER || 'appuser';
@@ -41,7 +46,6 @@ module.exports = {
         `ln -sfn ${DEPLOY_PATH}/shared/.env ./.env`,
         'npm ci --include=dev',
         'npm run build',
-        'npm prune --production',
         'pm2 startOrReload ecosystem.config.cjs --env production',
         'pm2 save',
       ].join(' && '),
