@@ -24,7 +24,7 @@ module.exports = {
       user: 'appuser',
       host: '185.200.178.73',
       ref: 'origin/main',
-      repo: 'GIT_REPO_URL_HERE', // замените на реальный URL репозитория
+      repo: 'https://github.com/RaufERK/triplex-mcp.git',
       path: '/home/appuser/apps/triplex-mcp',
       'pre-deploy-local': '',
       'post-deploy': [
