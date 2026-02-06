@@ -1,13 +1,13 @@
 // Load .env.deploy only for local deployment (not on server)
 try {
-  require('dotenv').config({ path: '.env.deploy' });
+  require('dotenv').config({ path: '.env.deploy' })
 } catch (e) {
   // dotenv not available (on server after npm prune)
 }
 
-const DEPLOY_HOST = process.env.DEPLOY_HOST || 'your.server.ip';
-const DEPLOY_USER = process.env.DEPLOY_USER || 'appuser';
-const DEPLOY_PATH = process.env.DEPLOY_PATH || '/home/appuser/apps/triplex-mcp';
+const DEPLOY_HOST = process.env.DEPLOY_HOST || 'your.server.ip'
+const DEPLOY_USER = process.env.DEPLOY_USER || 'appuser'
+const DEPLOY_PATH = process.env.DEPLOY_PATH || '/home/appuser/apps/triplex-mcp'
 
 module.exports = {
   apps: [
@@ -27,6 +27,24 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3041,
+        DOCS_PATH: `${DEPLOY_PATH}/source/docs`,
+      },
+    },
+    {
+      name: 'triplex-harvest',
+      cwd: `${DEPLOY_PATH}/source`,
+      script: 'node_modules/.bin/tsx',
+      args: 'src/harvest.ts',
+      instances: 1,
+      exec_mode: 'fork',
+      cron_restart: '0 3 * * *', // каждый день в 3:00 ночи
+      autorestart: false,
+      watch: false,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      out_file: `/home/${DEPLOY_USER}/logs/triplex-harvest-out.log`,
+      error_file: `/home/${DEPLOY_USER}/logs/triplex-harvest-error.log`,
+      env: {
+        NODE_ENV: 'production',
         DOCS_PATH: `${DEPLOY_PATH}/source/docs`,
       },
     },
