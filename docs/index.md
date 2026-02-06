@@ -1,6 +1,6 @@
 # Triplex Docs Index
 
-Updated: 2026-01-31T20:23:04.618Z
+Updated: 2026-02-06T08:43:56.879Z
 
 - [README.md](./README.md)
 - [triplex-next-npm.md](./triplex-next-npm.md)
