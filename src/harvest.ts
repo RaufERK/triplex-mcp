@@ -121,32 +121,43 @@ const writeIndex = async () => {
   await fs.writeFile(path.join(DOCS_PATH, "index.md"), lines.join("\n"), "utf-8");
 };
 
-const run = async () => {
+export const runHarvest = async () => {
+  console.log(`[harvest] Starting at ${new Date().toISOString()}`);
   await ensureDocsDir();
 
   for (const source of SOURCES) {
-    const raw = await fetchText(source.url, {
-      "user-agent":
-        "triplex-mcp/0.1.0 (+https://github.com/SberBusiness/triplex-next)",
-      accept:
-        source.type === "npm-registry"
-          ? "application/json"
-          : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    });
-    const content = (() => {
-      if (source.type === "markdown") {
-        return raw.trim() + "\n";
-      }
-      if (source.type === "npm-registry") {
-        const data = JSON.parse(raw) as { readme?: string };
-        return (data.readme ?? "").trim() + "\n";
-      }
-      return toMarkdown(raw, source.selectorHints);
-    })();
-    await writeDoc(source.slug, content, source.url);
+    try {
+      const raw = await fetchText(source.url, {
+        "user-agent":
+          "triplex-mcp/0.1.0 (+https://github.com/SberBusiness/triplex-next)",
+        accept:
+          source.type === "npm-registry"
+            ? "application/json"
+            : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      });
+      const content = (() => {
+        if (source.type === "markdown") {
+          return raw.trim() + "\n";
+        }
+        if (source.type === "npm-registry") {
+          const data = JSON.parse(raw) as { readme?: string };
+          return (data.readme ?? "").trim() + "\n";
+        }
+        return toMarkdown(raw, source.selectorHints);
+      })();
+      await writeDoc(source.slug, content, source.url);
+      console.log(`[harvest] OK: ${source.slug}`);
+    } catch (err) {
+      console.error(`[harvest] FAIL: ${source.slug}`, err);
+    }
   }
 
   await writeIndex();
+  console.log(`[harvest] Done at ${new Date().toISOString()}`);
 };
 
-await run();
+// Если запущен напрямую (npm run harvest)
+const isDirectRun = process.argv[1]?.includes("harvest");
+if (isDirectRun) {
+  await runHarvest();
+}

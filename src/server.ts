@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import cron from "node-cron";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { runHarvest } from "./harvest.js";
 
 const DOCS_PATH = process.env.DOCS_PATH
   ? path.resolve(process.env.DOCS_PATH)
@@ -104,6 +106,17 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     ],
   };
 });
+
+// Запуск harvest каждый день в 3:00 ночи
+cron.schedule("0 3 * * *", async () => {
+  try {
+    await runHarvest();
+  } catch (err) {
+    console.error("[cron] Harvest failed:", err);
+  }
+});
+
+console.log("[server] Triplex MCP started. Harvest scheduled at 03:00 daily.");
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
