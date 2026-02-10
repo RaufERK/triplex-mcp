@@ -46,6 +46,7 @@ module.exports = {
         `ln -sfn ${DEPLOY_PATH}/shared/.env ./.env`,
         'npm ci --include=dev',
         'npm run build',
+        `DOCS_PATH=${DEPLOY_PATH}/source/docs npm run harvest`,
         'pm2 startOrReload ecosystem.config.cjs --env production',
         'pm2 save',
       ].join(' && '),
