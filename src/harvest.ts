@@ -38,25 +38,56 @@ const storybookSelectorHints = ["#storybook-root", "main", "body"];
 const isStorybookUrl = (url: string) =>
   url.startsWith("https://storybook.triplex-dev.ru/main/");
 
+const isNpmUrl = (url: string) =>
+  url.startsWith("https://www.npmjs.com/package/");
+
+const isGithubUrl = (url: string) =>
+  url.startsWith("https://github.com/");
+
 const slugFromUrl = (url: string) => {
   const parsed = new URL(url);
   if (parsed.hostname === "storybook.triplex-dev.ru") {
     const pathParam = parsed.searchParams.get("path") ?? "main";
     return `triplex-storybook-${pathParam.replace(/[^\w-]/g, "-")}`;
   }
+  if (parsed.hostname === "www.npmjs.com") {
+    // /package/tot-ui-kit -> npm-tot-ui-kit
+    const packageName = parsed.pathname.replace("/package/", "").replace(/\//g, "-");
+    return `npm-${packageName.replace(/[^\w-]/g, "-")}`;
+  }
+  if (parsed.hostname === "github.com") {
+    // /SberBusiness/icons -> github-SberBusiness-icons
+    const repoPath = parsed.pathname.replace(/^\/|\/$/g, "").replace(/\//g, "-");
+    return `github-${repoPath.replace(/[^\w-]/g, "-")}`;
+  }
   return `triplex-${parsed.hostname.replace(/[^\w-]/g, "-")}-${parsed.pathname
     .replace(/[^\w-]/g, "-")
     .replace(/^-+|-+$/g, "")}`;
 };
 
+const getSourceType = (url: string): Source["type"] => {
+  if (isNpmUrl(url)) return "npm-registry";
+  return "html";
+};
+
+const getNpmRegistryUrl = (url: string): string => {
+  // https://www.npmjs.com/package/tot-ui-kit -> https://registry.npmjs.org/tot-ui-kit
+  const packageName = new URL(url).pathname.replace("/package/", "");
+  return `https://registry.npmjs.org/${packageName}`;
+};
+
 const docListSources: Source[] = docList
-  .filter((url) => isStorybookUrl(url))
-  .map((url) => ({
-    slug: slugFromUrl(url),
-    url,
-    type: "html" as const,
-    selectorHints: storybookSelectorHints,
-  }));
+  .filter((url) => isStorybookUrl(url) || isNpmUrl(url) || isGithubUrl(url))
+  .map((url) => {
+    const type = getSourceType(url);
+    const actualUrl = isNpmUrl(url) ? getNpmRegistryUrl(url) : url;
+    return {
+      slug: slugFromUrl(url),
+      url: actualUrl,
+      type,
+      selectorHints: isStorybookUrl(url) ? storybookSelectorHints : undefined,
+    };
+  });
 
 const SOURCES: Source[] = [...BASE_SOURCES, ...docListSources];
 

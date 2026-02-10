@@ -92,5 +92,6 @@ export const docList = [
   "https://www.npmjs.com/package/@sberbusiness/triplex-next",
   "https://github.com/SberBusiness/icons",
   "https://github.com/SberBusiness",
-  "https://github.com/SberBusiness/triplex-next"
+  "https://github.com/SberBusiness/triplex-next",
+  "https://www.npmjs.com/package/tot-ui-kit"
 ];
