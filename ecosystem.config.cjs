@@ -47,6 +47,7 @@ module.exports = {
         'npm ci --include=dev',
         'npx playwright install chromium',
         'npm run build',
+        'chmod +x bin/start-mcp.sh',
         `DOCS_PATH=${DEPLOY_PATH}/source/docs npm run harvest`,
         'pm2 startOrReload ecosystem.config.cjs --env production',
         'pm2 save',
