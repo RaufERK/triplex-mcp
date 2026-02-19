@@ -4,4 +4,14 @@ Source: https://storybook.triplex-dev.ru/main/?path=/docs/components-lightbox-li
 
 ---
 
+# LightBoxWithTopOverlayInSideOverlay
 
+Пример **LightBoxWithTopOverlayInSideOverlay** отображает крупный контент контент поверх страницы с уведомлением при закрытии SideOverlay.
+
+## Stories
+
+### Default
+
+Открыть LightBox
+
+Show code

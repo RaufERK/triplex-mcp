@@ -4,4 +4,22 @@ Source: https://storybook.triplex-dev.ru/main/?path=/docs/components-loaders-loa
 
 ---
 
+# LoaderMiddle
 
+Компонент квадратного загрузчика с анимированными точками.
+
+## Использование
+
+import { LoaderMiddle } from '@sberbusiness/triplex-next';
+
+<LoaderMiddle />
+
+Copy
+
+Show code
+
+## Stories
+
+### Default
+
+Show code

@@ -1,6 +1,6 @@
 # Triplex Docs Index
 
-Updated: 2026-02-19T08:40:39.325Z
+Updated: 2026-02-19T09:46:32.396Z
 
 - [github-SberBusiness-icons.md](./github-SberBusiness-icons.md)
 - [github-SberBusiness-triplex-next.md](./github-SberBusiness-triplex-next.md)
