@@ -10,7 +10,6 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "harvest": "tsx src/harvest.ts",
-    "scan:github": "tsx src/github-scan.ts",
     "deploy": "pm2 deploy ecosystem.config.cjs production"
   },
   "dependencies": {
