@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { chromium, Browser } from "playwright";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import { load } from "cheerio";
 import { docList } from "./doc-list.js";
@@ -34,6 +35,7 @@ const BASE_SOURCES: Source[] = [
 ];
 
 const storybookSelectorHints = ["#storybook-root", "main", "body"];
+const grafanaSelectorHints = ["main", "article", ".docs-content", "body"];
 
 const isStorybookUrl = (url: string) =>
   url.startsWith("https://storybook.triplex-dev.ru/main/");
@@ -43,6 +45,12 @@ const isNpmUrl = (url: string) =>
 
 const isGithubUrl = (url: string) =>
   url.startsWith("https://github.com/");
+
+const isGrafanaUrl = (url: string) =>
+  url.startsWith("https://grafana.com/docs/");
+
+const isSpaUrl = (url: string) =>
+  isGrafanaUrl(url);
 
 const slugFromUrl = (url: string) => {
   const parsed = new URL(url);
@@ -76,18 +84,22 @@ const getNpmRegistryUrl = (url: string): string => {
   return `https://registry.npmjs.org/${packageName}`;
 };
 
-const docListSources: Source[] = docList
-  .filter((url) => isStorybookUrl(url) || isNpmUrl(url) || isGithubUrl(url))
-  .map((url) => {
-    const type = getSourceType(url);
-    const actualUrl = isNpmUrl(url) ? getNpmRegistryUrl(url) : url;
-    return {
-      slug: slugFromUrl(url),
-      url: actualUrl,
-      type,
-      selectorHints: isStorybookUrl(url) ? storybookSelectorHints : undefined,
-    };
-  });
+const getSelectorHints = (url: string): string[] | undefined => {
+  if (isStorybookUrl(url)) return storybookSelectorHints;
+  if (isGrafanaUrl(url)) return grafanaSelectorHints;
+  return undefined;
+};
+
+const docListSources: Source[] = docList.map((url) => {
+  const type = getSourceType(url);
+  const actualUrl = isNpmUrl(url) ? getNpmRegistryUrl(url) : url;
+  return {
+    slug: slugFromUrl(url),
+    url: actualUrl,
+    type,
+    selectorHints: getSelectorHints(url),
+  };
+});
 
 const SOURCES: Source[] = [...BASE_SOURCES, ...docListSources];
 
@@ -126,6 +138,18 @@ const fetchText = async (url: string, headers?: Record<string, string>) => {
   return await res.text();
 };
 
+const fetchWithBrowser = async (browser: Browser, url: string) => {
+  const page = await browser.newPage();
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForTimeout(5000);
+    const html = await page.content();
+    return html;
+  } finally {
+    await page.close();
+  }
+};
+
 const writeDoc = async (slug: string, content: string, sourceUrl: string) => {
   const header = `# ${slug}\n\nSource: ${sourceUrl}\n\n---\n\n`;
   const filePath = path.join(DOCS_PATH, `${slug}.md`);
@@ -156,30 +180,51 @@ export const runHarvest = async () => {
   console.log(`[harvest] Starting at ${new Date().toISOString()}`);
   await ensureDocsDir();
 
-  for (const source of SOURCES) {
-    try {
-      const raw = await fetchText(source.url, {
-        "user-agent":
-          "triplex-mcp/0.1.0 (+https://github.com/SberBusiness/triplex-next)",
-        accept:
-          source.type === "npm-registry"
-            ? "application/json"
-            : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      });
-      const content = (() => {
-        if (source.type === "markdown") {
-          return raw.trim() + "\n";
-        }
-        if (source.type === "npm-registry") {
-          const data = JSON.parse(raw) as { readme?: string };
-          return (data.readme ?? "").trim() + "\n";
-        }
-        return toMarkdown(raw, source.selectorHints);
-      })();
-      await writeDoc(source.slug, content, source.url);
-      console.log(`[harvest] OK: ${source.slug}`);
-    } catch (err) {
-      console.error(`[harvest] FAIL: ${source.slug}`, err);
+  const hasSpaUrls = SOURCES.some((s) => isSpaUrl(s.url));
+  let browser: Browser | null = null;
+
+  if (hasSpaUrls) {
+    console.log("[harvest] Launching browser for SPA pages...");
+    browser = await chromium.launch({ headless: true });
+  }
+
+  try {
+    for (const source of SOURCES) {
+      try {
+        const needsBrowser = isSpaUrl(source.url);
+        
+        const raw = needsBrowser && browser
+          ? await fetchWithBrowser(browser, source.url)
+          : await fetchText(source.url, {
+              "user-agent":
+                "triplex-mcp/0.1.0 (+https://github.com/SberBusiness/triplex-next)",
+              accept:
+                source.type === "npm-registry"
+                  ? "application/json"
+                  : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            });
+
+        const content = (() => {
+          if (source.type === "markdown") {
+            return raw.trim() + "\n";
+          }
+          if (source.type === "npm-registry") {
+            const data = JSON.parse(raw) as { readme?: string };
+            return (data.readme ?? "").trim() + "\n";
+          }
+          return toMarkdown(raw, source.selectorHints);
+        })();
+        
+        await writeDoc(source.slug, content, source.url);
+        console.log(`[harvest] OK: ${source.slug}${needsBrowser ? " (browser)" : ""}`);
+      } catch (err) {
+        console.error(`[harvest] FAIL: ${source.slug}`, err);
+      }
+    }
+  } finally {
+    if (browser) {
+      await browser.close();
+      console.log("[harvest] Browser closed");
     }
   }
 

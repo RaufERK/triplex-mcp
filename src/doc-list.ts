@@ -93,5 +93,6 @@ export const docList = [
   "https://github.com/SberBusiness/icons",
   "https://github.com/SberBusiness",
   "https://github.com/SberBusiness/triplex-next",
-  "https://www.npmjs.com/package/tot-ui-kit"
+  "https://www.npmjs.com/package/tot-ui-kit",
+  "https://grafana.com/docs/loki/latest/reference/loki-http-api/"
 ];

@@ -1,6 +1,6 @@
 # Triplex Docs Index
 
-Updated: 2026-02-10T15:58:06.256Z
+Updated: 2026-02-19T08:40:39.325Z
 
 - [github-SberBusiness-icons.md](./github-SberBusiness-icons.md)
 - [github-SberBusiness-triplex-next.md](./github-SberBusiness-triplex-next.md)
@@ -8,6 +8,7 @@ Updated: 2026-02-10T15:58:06.256Z
 - [npm--sberbusiness-triplex-next.md](./npm--sberbusiness-triplex-next.md)
 - [npm-tot-ui-kit.md](./npm-tot-ui-kit.md)
 - [README.md](./README.md)
+- [triplex-grafana-com-docs-loki-latest-reference-loki-http-api.md](./triplex-grafana-com-docs-loki-latest-reference-loki-http-api.md)
 - [triplex-next-npm.md](./triplex-next-npm.md)
 - [triplex-next-readme.md](./triplex-next-readme.md)
 - [triplex-next-site.md](./triplex-next-site.md)

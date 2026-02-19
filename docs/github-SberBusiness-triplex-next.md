@@ -157,7 +157,7 @@ You signed in with another tab or window. Reload to refresh your session. You si
 
 * [ Code ](/SberBusiness/triplex-next)
 * [ Issues 0 ](/SberBusiness/triplex-next/issues)
-* [ Pull requests 4 ](/SberBusiness/triplex-next/pulls)
+* [ Pull requests 5 ](/SberBusiness/triplex-next/pulls)
 * [ Actions ](/SberBusiness/triplex-next/actions)
 * [ Projects 0 ](/SberBusiness/triplex-next/projects)
 * [ Security 0 ](/SberBusiness/triplex-next/security)
@@ -189,7 +189,7 @@ Open more actions menu
 
 | Name                                                                                                                | Name                                                                                                                | Last commit message | Last commit date |
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------- | ---------------- |
-| Latest commit History[831 Commits](/SberBusiness/triplex-next/commits/main/)831 Commits                             |                                                                                                                     |                     |                  |
+| Latest commit History[850 Commits](/SberBusiness/triplex-next/commits/main/)850 Commits                             |                                                                                                                     |                     |                  |
 | [.cursor/rules](/SberBusiness/triplex-next/tree/main/.cursor/rules "This path skips through empty directories")     | [.cursor/rules](/SberBusiness/triplex-next/tree/main/.cursor/rules "This path skips through empty directories")     |                     |                  |
 | [.github](/SberBusiness/triplex-next/tree/main/.github ".github")                                                   | [.github](/SberBusiness/triplex-next/tree/main/.github ".github")                                                   |                     |                  |
 | [.husky](/SberBusiness/triplex-next/tree/main/.husky ".husky")                                                      | [.husky](/SberBusiness/triplex-next/tree/main/.husky ".husky")                                                      |                     |                  |
@@ -392,11 +392,11 @@ There was an error while loading. Please reload this page.
 
 [ Report repository](/contact/report-content?content%5Furl=https%3A%2F%2Fgithub.com%2FSberBusiness%2Ftriplex-next&report=SberBusiness+%28user%29) 
 
-## [Releases23](/SberBusiness/triplex-next/releases)
+## [Releases25](/SberBusiness/triplex-next/releases)
 
-[ 0.14.1  Latest Feb 4, 2026 ](/SberBusiness/triplex-next/releases/tag/0.14.1) 
+[ 0.15.0  Latest Feb 16, 2026 ](/SberBusiness/triplex-next/releases/tag/0.15.0) 
 
-[\+ 22 releases](/SberBusiness/triplex-next/releases)
+[\+ 24 releases](/SberBusiness/triplex-next/releases)
 
 ## [Packages0](/orgs/SberBusiness/packages?repo%5Fname=triplex-next)
 
@@ -410,9 +410,9 @@ There was an error while loading. Please reload this page.
 
 ## Languages
 
-* [ TypeScript 93.2% ](/SberBusiness/triplex-next/search?l=typescript)
+* [ TypeScript 93.0% ](/SberBusiness/triplex-next/search?l=typescript)
 * [ Less 5.8% ](/SberBusiness/triplex-next/search?l=less)
-* Other 1.0%
+* Other 1.2%
 
 ## Footer
 
