@@ -33,6 +33,10 @@ A [list of clients](../../send-data/) can be found in the clients documentation.
 > 
 > Requests sent to the query endpoints must use valid LogQL syntax. For more information, see the [LogQL](../../query/) section of the documentation.
 
+> Tip
+> 
+> For Python examples of these endpoints, see [Query Loki with Python](../python-client-examples/).
+
 These HTTP endpoints are exposed by the `querier`, `query-frontend`, `read`, and `all` components:
 
 * [GET /loki/api/v1/query](#query-logs-at-a-single-point-in-time)
@@ -276,7 +280,7 @@ For information on how to configure Loki, refer to the[OTel Collector topic](/do
 
 > Note
 > 
-> When configuring the OpenTelemetry Collector, you must use `endpoint: http://<loki-addr>/otlp`, as the collector automatically completes the endpoint. Entering the full endpoint will generate an error.
+> When configuring the OpenTelemetry Collector, you must use `endpoint: http://<LOKI_ADDR>/otlp`, as the collector automatically completes the endpoint. Entering the full endpoint will generate an error.
 
 ## Query logs at a single point in time[ ](#query-logs-at-a-single-point-in-time)
 
@@ -463,7 +467,7 @@ Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
 
 ```bash
 curl -u "User:$API_TOKEN" \
-  -G -s "<URL-PROVIDED-IN-LOKI-DATA-SOURCE-SETTINGS>/loki/api/v1/query" \
+  -G -s "<URL_PROVIDED_IN_LOKI_DATA_SOURCE_SETTINGS>/loki/api/v1/query" \
   --data-urlencode 'query=sum(rate({job="varlogs"}[10m])) by (level)' | jq
 ```
 
@@ -1074,6 +1078,160 @@ Expand code
 
 The result is a list of patterns detected in the logs, with the number of samples for each pattern at each timestamp. The pattern format is the same as the [LogQL](../../query/) pattern filter and parser and can be used in queries for filtering matching logs. Each sample is a tuple of timestamp (second) and count.
 
+## Detected fields[ ](#detected-fields)
+
+Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```bash
+GET /loki/api/v1/detected_fields
+POST /loki/api/v1/detected_fields
+```
+
+The `/loki/api/v1/detected_fields` endpoint returns fields that Loki has detected in log lines matching the given stream selector, along with the inferred type, estimated cardinality, and the parser that was used to extract the field. This endpoint is useful for discovering the structure of your logs without running a full log query.
+
+URL query parameters:
+
+* `query`: The [LogQL](../../query/) stream selector to match. Example: `{app="myapp", environment="dev"}`. This parameter is required.
+* `start=<nanosecond Unix epoch>`: Start timestamp. This parameter is optional. If omitted, it defaults to `end - since`.
+* `end=<nanosecond Unix epoch>`: End timestamp. This parameter is optional. If omitted, it defaults to the current server time.
+* `since=<duration>`: Relative time range (for example, `1h`, `5m`). This parameter is optional and is used when `start` is omitted to compute `start = end - since`. If both `start` and `since` are omitted, `since` defaults to `1h`.
+* `step=<duration string or float number of seconds>`: Step between sample windows. This parameter is optional.
+* `line_limit=<integer>`: Maximum number of log lines to scan per shard. Defaults to 100\. This parameter is optional.
+* `limit=<integer>`: Maximum number of fields to return. Defaults to 1000\. The query parameter `field_limit` is also accepted as an alias for backwards compatibility. This parameter is optional.
+
+You can URL-encode these parameters directly in the request body by using the POST method and `Content-Type: application/x-www-form-urlencoded` header.
+
+Response format:
+
+Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```bash
+{
+  "fields": [
+    {
+      "label": <string>,
+      "type": <string|int|float|boolean|duration|bytes>,
+      "cardinality": <integer>,
+      "parsers": [<string>],
+      "jsonPath": <string, optional>,
+      "sketch": <object, optional>
+    }
+  ],
+  "limit": <integer>
+}
+```
+
+### Examples[ ](#examples-7)
+
+This example cURL command
+
+Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```bash
+curl -H 'X-Scope-OrgID: <TENANT_ID>' -G -s "http://localhost:3100/loki/api/v1/detected_fields" \
+  --data-urlencode 'query={app="myapp"}' \
+  --data-urlencode 'start=1609459200000000000' \
+  --data-urlencode 'end=1609462800000000000' | jq
+```
+
+gave this response:
+
+JSON ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+Expand code
+
+```json
+{
+  "fields": [
+    {
+      "label": "level",
+      "type": "string",
+      "cardinality": 3,
+      "parsers": ["logfmt"]
+    },
+    {
+      "label": "duration",
+      "type": "duration",
+      "cardinality": 152,
+      "parsers": ["logfmt"]
+    },
+    {
+      "label": "status",
+      "type": "int",
+      "cardinality": 5,
+      "parsers": ["logfmt"]
+    }
+  ],
+  "limit": 1000
+}
+```
+
+## Detected field values[ ](#detected-field-values)
+
+Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```bash
+GET /loki/api/v1/detected_field/{name}/values
+POST /loki/api/v1/detected_field/{name}/values
+```
+
+The `/loki/api/v1/detected_field/{name}/values` endpoint returns the values observed for a specific detected field matching the given stream selector.`{name}` is the name of the field to retrieve values for.
+
+URL query parameters:
+
+* `query`: The [LogQL](../../query/) stream selector to match. Example: `{app="myapp", environment="dev"}`. This parameter is required.
+* `start=<nanosecond Unix epoch>`: Start timestamp. This parameter is optional. If omitted, it defaults to `end - since`.
+* `end=<nanosecond Unix epoch>`: End timestamp. This parameter is optional. If omitted, it defaults to the current server time.
+* `since=<duration>`: Relative time range (for example, `1h`, `5m`). This parameter is optional and is used when `start` is omitted to compute `start = end - since`. If both `start` and `since` are omitted, `since` defaults to `1h`.
+* `step=<duration string or float number of seconds>`: Step between sample windows. This parameter is optional.
+* `line_limit=<integer>`: Maximum number of log lines to scan per shard. Defaults to 100\. This parameter is optional.
+* `limit=<integer>`: Maximum number of values to return. Defaults to 1000\. The query parameter `field_limit` is also accepted as an alias. This parameter is optional.
+
+You can URL-encode these parameters directly in the request body by using the POST method and `Content-Type: application/x-www-form-urlencoded` header.
+
+Response format:
+
+Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```bash
+{
+  "values": [
+    <string>,
+    ...
+  ],
+  "limit": <integer>
+}
+```
+
+### Examples[ ](#examples-8)
+
+This example cURL command
+
+Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```bash
+curl -H 'X-Scope-OrgID: <TENANT_ID>' -G -s "http://localhost:3100/loki/api/v1/detected_field/level/values" \
+  --data-urlencode 'query={app="myapp"}' \
+  --data-urlencode 'start=1609459200000000000' \
+  --data-urlencode 'end=1609462800000000000' | jq
+```
+
+gave this response:
+
+JSON ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
+
+```json
+{
+  "values": [
+    "debug",
+    "info",
+    "warn",
+    "error"
+  ],
+  "limit": 1000
+}
+```
+
 ## Stream logs[ ](#stream-logs)
 
 Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
@@ -1090,6 +1248,10 @@ GET /loki/api/v1/tail
 * `start`: The start time for the query as a nanosecond Unix epoch. Defaults to one hour ago.
 
 In microservices mode, `/loki/api/v1/tail` is exposed by the querier.
+
+> Note
+> 
+> The `tail` endpoint is designed for near real-time observation of a log stream. The initial lookback from `start` to the current time is best-effort and isn’t guaranteed to return every matching log line, so this endpoint isn’t suitable for retrieving complete log history. To reliably retrieve a large or complete range of logs, make repeated calls to [/loki/api/v1/query\_range](#query-logs-within-a-range-of-time).
 
 Response format (streamed):
 
@@ -1318,32 +1480,32 @@ Expand code
   interval: <duration;optional>
   rules:
   - alert: <string>
-      expr: <string>
-      for: <duration>
-      annotations:
+    expr: <string>
+    for: <duration>
+    annotations:
       <annotation_name>: <string>
-      labels:
+    labels:
       <label_name>: <string>
 - name: <string>
   interval: <duration;optional>
   rules:
   - alert: <string>
-      expr: <string>
-      for: <duration>
-      annotations:
+    expr: <string>
+    for: <duration>
+    annotations:
       <annotation_name>: <string>
-      labels:
+    labels:
       <label_name>: <string>
 <namespace2>:
 - name: <string>
   interval: <duration;optional>
   rules:
   - alert: <string>
-      expr: <string>
-      for: <duration>
-      annotations:
+    expr: <string>
+    for: <duration>
+    annotations:
       <annotation_name>: <string>
-      labels:
+    labels:
       <label_name>: <string>
 ```
 
@@ -1501,7 +1663,7 @@ A 204 response indicates success.
 
 The query parameter can also include filter operations. For example `query={foo="bar"} |= "other"` will filter out lines that contain the string “other” for the streams matching the stream selector `{foo="bar"}`.
 
-#### Examples[ ](#examples-7)
+#### Examples[ ](#examples-9)
 
 URL encode the `query` parameter. This sample form of a cURL command URL encodes `query={foo="bar"}`:
 
@@ -1545,7 +1707,12 @@ GET /loki/api/v1/delete
 
 This endpoint returns both processed and unprocessed deletion requests. It does not list canceled requests, as those requests will have been removed from storage.
 
-#### Examples[ ](#examples-8)
+Query parameters:
+
+* `start=<rfc3339 | unix_seconds_timestamp>`: Optional. A timestamp that identifies the start of the time range. Only deletion requests that overlap with this time range will be returned. Must be provided together with `end`.
+* `end=<rfc3339 | unix_seconds_timestamp>`: Optional. A timestamp that identifies the end of the time range. Only deletion requests that overlap with this time range will be returned. Must be provided together with `start`.
+
+#### Examples[ ](#examples-10)
 
 Example cURL command:
 
@@ -1553,8 +1720,8 @@ Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
 
 ```bash
 curl -X GET \
-  <compactor_addr>/loki/api/v1/delete \
-  -H 'X-Scope-OrgID: <orgid>'
+  <COMPACTOR_ADDR>/loki/api/v1/delete \
+  -H 'X-Scope-OrgID: <ORG_ID>'
 ```
 
 The same example deletion request for Grafana Enterprise Logs uses Basic Authentication and specifies the tenant name as a user; `Tenant1` is the tenant name in this example. The password in this example is an access policy token that has been defined in the API\_TOKEN environment variable. The token must be for an access policy with `logs:delete` scope for the tenant specified in the user field.
@@ -1564,7 +1731,7 @@ Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
 ```bash
 curl -u "Tenant1:$API_TOKEN" \
   -X GET \
-  <compactor_addr>/loki/api/v1/delete
+  <COMPACTOR_ADDR>/loki/api/v1/delete
 ```
 
 ### Request cancellation of a delete request[ ](#request-cancellation-of-a-delete-request)
@@ -1599,7 +1766,7 @@ Query parameters:
 
 A 204 response indicates success.
 
-#### Examples[ ](#examples-9)
+#### Examples[ ](#examples-11)
 
 Example cURL command:
 
@@ -1607,8 +1774,8 @@ Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
 
 ```bash
 curl -X DELETE \
-  '<compactor_addr>/loki/api/v1/delete?request_id=<request_id>' \
-  -H 'X-Scope-OrgID: <tenant-id>'
+  '<COMPACTOR_ADDR>/loki/api/v1/delete?request_id=<REQUEST_ID>' \
+  -H 'X-Scope-OrgID: <TENANT_ID>'
 ```
 
 The same example deletion cancellation request for Grafana Enterprise Logs uses Basic Authentication and specifies the tenant name as a user; `Tenant1` is the tenant name in this example. The password in this example is an access policy token that has been defined in the API\_TOKEN environment variable. The token must be for an access policy with `logs:delete` scope for the tenant specified in the user field.
@@ -1618,7 +1785,7 @@ Bash ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
 ```bash
 curl -u "Tenant1:$API_TOKEN" \
   -X DELETE \
-  '<compactor_addr>/loki/api/v1/delete?request_id=<request_id>'
+  '<COMPACTOR_ADDR>/loki/api/v1/delete?request_id=<REQUEST_ID>'
 ```
 
 ## Format a LogQL query[ ](#format-a-logql-query)
@@ -1651,10 +1818,10 @@ JSON ![Copy code to clipboard](/media/images/icons/icon-copy-small-2.svg) Copy
 
 ![👍](/media/images/svg/thumbs-up.svg) Yes ![👎](/media/images/svg/thumbs-up.svg) No
 
-[Suggest an edit in GitHub ](https://github.com/grafana/loki/edit/main/docs/sources/reference/loki-http-api.md)[Create a GitHub issue ](https://github.com/grafana/loki/issues/new?title=Documentation%20feedback:%20/docs/sources/reference/loki-http-api.md)[Email docs@grafana.com ](mailto:docs@grafana.com)[Help and support ](/help/)[Community](/community/)
+[Suggest an edit in GitHub ](https://github.com/grafana/loki/edit/release-3.7.x/docs/sources/reference/loki-http-api.md)[Create a GitHub issue ](https://github.com/grafana/loki/issues/new?title=Documentation%20feedback:%20/docs/sources/reference/loki-http-api.md)[Email docs@grafana.com ](mailto:docs@grafana.com)[Help and support ](/help/)[Community](/community/)
 
 ## Related resources from Grafana Labs
 
 Additional helpful documentation, links, and articles:
 
-[![video icon](/static/assets/img/icons/grafana-icon-card-video.svg)VideoGetting started with logging and Grafana LokiSee a demo of the updated features in Loki, and how to create metrics from logs and alert on your logs with powerful Prometheus-style alerting rules.](https://grafana.com/go/webinar/getting-started-with-logging-and-grafana-loki/?pg=docs-loki-latest-reference-loki-http-api&plcmt=related)[![video icon](/static/assets/img/icons/grafana-icon-card-video.svg)VideoEssential Grafana Loki configuration settingsThis webinar focuses on Grafana Loki configuration including agents Promtail and Docker; the Loki server; and Loki storage for popular backends.](https://grafana.com/go/webinar/logging-with-loki-essential-configuration-settings/?pg=docs-loki-latest-reference-loki-http-api&plcmt=related-2)[![webinar icon](/static/assets/img/icons/grafana-icon-card-webinar.svg)VideoScaling and securing your logs with Grafana LokiThis webinar covers the challenges of scaling and securing logs, and how Grafana Cloud Logs powered by Grafana Loki can help, cost-effectively.](https://grafana.com/go/webinar/scaling-and-securing-your-logs-with-grafana-loki/?pg=docs-loki-latest-reference-loki-http-api&plcmt=related-3)
+[![video icon](/static/assets/img/icons/grafana-icon-card-video.svg)VideoGetting started with logging and Grafana LokiSee a demo of the updated features in Loki, and how to create metrics from logs and alert on your logs with powerful Prometheus-style alerting rules.](https://grafana.com/go/webinar/getting-started-with-logging-and-grafana-loki/?pg=docs-loki-latest-reference-loki-http-api&plcmt=related)[![video icon](/static/assets/img/icons/grafana-icon-card-video.svg)VideoEssential Grafana Loki configuration settingsThis webinar focuses on Grafana Loki configuration including agents Promtail and Docker; the Loki server; and Loki storage for popular backends.](https://grafana.com/go/webinar/logging-with-loki-essential-configuration-settings/?pg=docs-loki-latest-reference-loki-http-api&plcmt=related-2)[![video icon](/static/assets/img/icons/grafana-icon-card-video.svg)VideoScaling and securing your logs with Grafana LokiThis webinar covers the challenges of scaling and securing logs, and how Grafana Cloud Logs powered by Grafana Loki can help, cost-effectively.](https://grafana.com/go/webinar/scaling-and-securing-your-logs-with-grafana-loki/?pg=docs-loki-latest-reference-loki-http-api&plcmt=related-3)

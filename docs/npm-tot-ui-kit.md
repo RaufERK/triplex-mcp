@@ -60,7 +60,7 @@ export const App = () => (
   <Layout
     menuProps={{
       baseUrl: 'http://localhost:4000',
-      menuId: '<your-menu-id>',
+      fetchOptions: { credentials: 'include' },
       activeAppId: 'my-app',
       systemTitle: 'Моё приложение',
     }}
@@ -134,8 +134,8 @@ const MyPage = () => (
 ```css
 /* Используйте CSS-переменные из Triplex */
 .my-card {
-  background: var(--triplex-next-Card-Static_General_Background-1-14-0);
-  color: var(--triplex-next-Typography-Primary_Color-1-14-0);
+  background: var(--triplex-next-Card-Static_General_Background-1-33-0);
+  color: var(--triplex-next-Typography-Primary_Color-1-33-0);
 }
 
 /* Или через data-theme */
@@ -153,7 +153,7 @@ html[data-theme='dark'] .my-card {
 - Link, Tag, Divider, Island
 - **Иконки** из `@sberbusiness/icons-next` (крестики, шевроны и т.д.)
 
-> Подробная документация: см. **[DARK-THEME.md](./DARK-THEME.md)**
+> Подробная документация: см. **[docs/DARK-THEME.md](./docs/DARK-THEME.md)**
 
 ## Основные пропсы
 
@@ -169,21 +169,36 @@ html[data-theme='dark'] .my-card {
 
 | Проп | Описание |
 |------|----------|
-| `baseUrl` | Базовый URL API |
-| `menuId` | ID меню для загрузки данных |
+| `dataUrl` | Точный URL API меню. Если передан, используется вместо `baseUrl` |
+| `baseUrl` | Базовый URL API. По умолчанию меню грузится с `${baseUrl}/iam/menu/` |
+| `menuEndpoint` | Путь меню относительно `baseUrl`, по умолчанию `/iam/menu/` |
+| `menuId` | Legacy ID меню. Используется только если `menuEndpoint` содержит `:menuId` |
 | `activeAppId` | ID активного приложения |
 | `useMockData` | Использовать встроенные mock-данные |
 | `onLayoutChange` | Callback при переключении layout |
 | `onThemeChange` | Callback при переключении темы |
 
+## Backend Contract для меню
+
+Короткий текст для backend-разработчика лежит в [docs/MENU_BACKEND_SHORT_RU.txt](./docs/MENU_BACKEND_SHORT_RU.txt).
+Подробный формат backend API описан в [docs/MENU_BACKEND_CONTRACT.md](./docs/MENU_BACKEND_CONTRACT.md).
+Swagger/OpenAPI JSON лежит в [docs/menu.openapi.json](./docs/menu.openapi.json).
+
+Коротко:
+- backend отдаёт меню по текущей session/cookie;
+- `Authorization` / Bearer token не обязателен;
+- дефолтный endpoint: `/iam/menu/`;
+- frontend ждёт массив `{ client_id, app_name, link, order?, available?, description? }`;
+- иконки выбираются локально по `client_id`, поле `icon` deprecated.
+
 ## Peer Dependencies
 
 ```json
 {
-  "@sberbusiness/triplex-next": "^1.14.0",
-  "@sberbusiness/icons-next": "^1.11.0",
-  "react": "^18.0.0",
-  "react-dom": "^18.0.0"
+  "@sberbusiness/triplex-next": "^1.33.0",
+  "@sberbusiness/icons-next": "^1.26.0",
+  "react": "^18.3.1",
+  "react-dom": "^18.3.1"
 }
 ```
 
@@ -191,6 +206,12 @@ html[data-theme='dark'] .my-card {
 
 ```
 tot-ui-kit/
+├── docs/
+│   ├── DARK-THEME.md        # Подробная документация по темам
+│   ├── DEV_README.md        # Developer guide
+│   ├── MENU_BACKEND_CONTRACT.md
+│   ├── MENU_BACKEND_SHORT_RU.txt
+│   └── menu.openapi.json
 ├── src/
 │   ├── global.css           # CSS-переменные для тёмной темы + хаки для иконок
 │   ├── components/
@@ -198,7 +219,6 @@ tot-ui-kit/
 │   │       └── Layout.tsx   # ThemeProvider + логика переключения
 │   └── theme/
 │       └── index.ts         # useTheme, getCurrentTheme
-├── DARK-THEME.md            # Подробная документация по темам
 └── README.md                # Этот файл
 ```
 

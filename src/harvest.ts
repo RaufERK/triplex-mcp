@@ -12,6 +12,8 @@ const DOCS_PATH = process.env.DOCS_PATH
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? "";
 const USE_GPT_CLEANING = process.env.USE_GPT_CLEANING === "true";
+const HARVEST_BROWSER_TIMEOUT_MS = Number(process.env.HARVEST_BROWSER_TIMEOUT_MS ?? "15000");
+const HARVEST_MAX_HOST_FAILURES = Number(process.env.HARVEST_MAX_HOST_FAILURES ?? "3");
 
 type Source = {
   slug: string;
@@ -55,6 +57,8 @@ const isGrafanaUrl = (url: string) =>
 
 const isSpaUrl = (url: string) =>
   isGrafanaUrl(url) || isStorybookUrl(url);
+
+const hostFromUrl = (url: string) => new URL(url).hostname;
 
 const slugFromUrl = (url: string) => {
   const parsed = new URL(url);
@@ -174,7 +178,7 @@ const fetchText = async (url: string, headers?: Record<string, string>) => {
 const fetchWithBrowser = async (browser: Browser, url: string) => {
   const page = await browser.newPage();
   try {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: HARVEST_BROWSER_TIMEOUT_MS });
     await page.waitForTimeout(5000);
     
     // Storybook загружает контент в iframe
@@ -289,10 +293,18 @@ export const runHarvest = async () => {
   }
 
   try {
+    const hostFailureCounts = new Map<string, number>();
+
     for (const source of SOURCES) {
       try {
         const needsBrowser = isSpaUrl(source.url);
         const isGithub = isGithubUrl(source.url);
+        const host = hostFromUrl(source.url);
+
+        if (needsBrowser && (hostFailureCounts.get(host) ?? 0) >= HARVEST_MAX_HOST_FAILURES) {
+          console.warn(`[harvest] SKIP: ${source.slug} (${host} failed too many times)`);
+          continue;
+        }
         
         let raw: string;
         
@@ -329,9 +341,16 @@ export const runHarvest = async () => {
         }
         
         await writeDoc(source.slug, content, source.url);
+        if (needsBrowser) {
+          hostFailureCounts.set(host, 0);
+        }
         const method = isGithub ? " (raw)" : needsBrowser ? (USE_GPT_CLEANING ? " (GPT)" : " (browser)") : "";
         console.log(`[harvest] OK: ${source.slug}${method}`);
       } catch (err) {
+        if (isSpaUrl(source.url)) {
+          const host = hostFromUrl(source.url);
+          hostFailureCounts.set(host, (hostFailureCounts.get(host) ?? 0) + 1);
+        }
         console.error(`[harvest] FAIL: ${source.slug}`, err);
       }
     }
