@@ -1,13 +1,6 @@
-// Load .env.deploy only for local deployment (not on server)
-try {
-  require('dotenv').config({ path: '.env.deploy' })
-} catch (e) {
-  // dotenv not available (on server after npm prune)
-}
-
-const DEPLOY_HOST = process.env.DEPLOY_HOST || 'your.server.ip'
-const DEPLOY_USER = process.env.DEPLOY_USER || 'appuser'
-const DEPLOY_PATH = process.env.DEPLOY_PATH || '/home/appuser/apps/triplex-mcp'
+const DEPLOY_HOST = 'amster_app'
+const DEPLOY_USER = 'appuser'
+const DEPLOY_PATH = '/home/appuser/apps/triplex-mcp'
 
 module.exports = {
   apps: [
