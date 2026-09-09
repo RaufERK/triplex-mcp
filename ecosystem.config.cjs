@@ -24,6 +24,7 @@ module.exports = {
       error_file: `/home/${DEPLOY_USER}/logs/triplex-mcp-error.log`,
       env: {
         NODE_ENV: 'production',
+        HOST: '127.0.0.1',
         PORT: 3041,
         DOCS_PATH: `${DEPLOY_PATH}/source/docs`,
       },

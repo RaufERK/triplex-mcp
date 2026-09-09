@@ -3,7 +3,7 @@
     "triplex-docs": {
       "url": "https://spoken-word.info/triplex-mcp/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_MCP_AUTH_TOKEN"
+        "Authorization": "Bearer ${env:TRIPLEX_MCP_TOKEN}"
       }
     }
   }
