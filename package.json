@@ -6,6 +6,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
+    "audit:prod": "npm audit --omit=dev",
     "dev": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
