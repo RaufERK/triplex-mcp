@@ -25,6 +25,7 @@ const DOCS_PATH = requireDocsPath();
 const PORT = process.env.PORT ? Number(process.env.PORT) : null;
 const HOST = process.env.HOST ?? "127.0.0.1";
 const MCP_AUTH_TOKEN = process.env.MCP_AUTH_TOKEN ?? "";
+const HARVEST_CRON = process.env.HARVEST_CRON ?? "0 3 * * *";
 
 const createMcpServer = () => {
   const server = new McpServer(
@@ -141,7 +142,7 @@ const bearerOk = (header: string | undefined) => {
   return timingSafeEqual(actual, expected);
 };
 
-cron.schedule("0 3 * * *", async () => {
+cron.schedule(HARVEST_CRON, async () => {
   try {
     await runHarvest();
   } catch (err) {
@@ -153,7 +154,7 @@ const startStdio = async () => {
   const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("[server] Triplex MCP stdio started. Harvest scheduled at 03:00 daily.");
+  console.error(`[server] Triplex MCP stdio started. Harvest cron: ${HARVEST_CRON}.`);
 };
 
 const startHttp = async () => {
@@ -232,7 +233,7 @@ const startHttp = async () => {
   });
 
   console.error(
-    `[server] Triplex MCP HTTP on http://${HOST}:${PORT}/mcp. Harvest scheduled at 03:00 daily.`
+    `[server] Triplex MCP HTTP on http://${HOST}:${PORT}/mcp. Harvest cron: ${HARVEST_CRON}.`
   );
 };
 

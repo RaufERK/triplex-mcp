@@ -18,7 +18,7 @@ Minimal MCP server that exposes Triplex documentation markdown files as MCP reso
 # Directory Structure
 
 - `src/` server and scripts
-- `docs/` markdown docs
+- `docs/` harvested markdown docs (git-ignored, generated; on the server: `shared/docs`)
 - `dist/` compiled output
 
 # Coding Rules

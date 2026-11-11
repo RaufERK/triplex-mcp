@@ -1,6 +1,7 @@
 const DEPLOY_HOST = 'amster_app'
 const DEPLOY_USER = 'appuser'
 const DEPLOY_PATH = '/home/appuser/apps/triplex-mcp'
+const DOCS_DIR = `${DEPLOY_PATH}/shared/docs`
 const NODE_VERSION = '24.22.1'
 const NVM_BIN = `/home/${DEPLOY_USER}/.nvm/versions/node/v${NODE_VERSION}/bin`
 const NODE_BIN = `${NVM_BIN}/node`
@@ -26,7 +27,7 @@ module.exports = {
         NODE_ENV: 'production',
         HOST: '127.0.0.1',
         PORT: 3041,
-        DOCS_PATH: `${DEPLOY_PATH}/source/docs`,
+        DOCS_PATH: DOCS_DIR,
       },
     },
   ],
@@ -47,9 +48,10 @@ module.exports = {
         'npx playwright install chromium',
         'npm run build',
         'chmod +x bin/start-mcp.sh',
-        `DOCS_PATH=${DEPLOY_PATH}/source/docs npm run harvest`,
-        `${PM2_BIN} startOrReload ecosystem.config.cjs --env production`,
+        `mkdir -p ${DOCS_DIR}`,
+        `${PM2_BIN} startOrReload ecosystem.config.cjs --env production --update-env`,
         `${PM2_BIN} save`,
+        `(DOCS_PATH=${DOCS_DIR} nohup npm run harvest </dev/null >> /home/${DEPLOY_USER}/logs/triplex-mcp-harvest.log 2>&1 &)`,
       ].join(' && '),
       env: {
         NODE_ENV: 'production',
