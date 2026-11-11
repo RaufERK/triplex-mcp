@@ -1,6 +1,8 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { spawn } from "node:child_process";
 import { timingSafeEqual } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 import cron from "node-cron";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -11,7 +13,6 @@ import {
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { runHarvest } from "./harvest.js";
 import {
   listMarkdownFiles,
   readDoc,
@@ -142,12 +143,29 @@ const bearerOk = (header: string | undefined) => {
   return timingSafeEqual(actual, expected);
 };
 
-cron.schedule(HARVEST_CRON, async () => {
-  try {
-    await runHarvest();
-  } catch (err) {
-    console.error("[cron] Harvest failed:", err);
+let harvestRunning = false;
+
+// Harvest runs in a child process: Playwright needs far more memory than the
+// server's PM2 max_memory_restart limit, and it must not kill the server.
+cron.schedule(HARVEST_CRON, () => {
+  if (harvestRunning) {
+    console.error("[cron] Harvest already running, skipping");
+    return;
   }
+  harvestRunning = true;
+  const child = spawn(
+    process.execPath,
+    [...process.execArgv, fileURLToPath(new URL("./harvest.js", import.meta.url))],
+    { env: process.env, stdio: "inherit" }
+  );
+  child.on("error", (err) => {
+    harvestRunning = false;
+    console.error("[cron] Harvest failed to start:", err);
+  });
+  child.on("close", (code) => {
+    harvestRunning = false;
+    console.error(`[cron] Harvest process exited with code ${code}`);
+  });
 });
 
 const startStdio = async () => {
