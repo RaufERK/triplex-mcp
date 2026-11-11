@@ -9,3 +9,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 pictures/
+
+# harvested docs: generated data, lives in shared/docs on the server
+docs/
